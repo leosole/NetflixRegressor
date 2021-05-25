@@ -1,8 +1,7 @@
 
 #%%
-# ## Importing Necessary Modules
-import requests # to get image from the web
-import shutil # to save it locally
+import requests 
+import shutil 
 import pandas as pd
 from os.path import exists
 
@@ -18,7 +17,7 @@ for index, row in df.iterrows():
         if r.status_code == 200:
             r.raw.decode_content = True
             
-            with open(filename.split('?')[0],'wb') as f:
+            with open('img/'+filename.split('?')[0],'wb') as f:
                 shutil.copyfileobj(r.raw, f)
                 
             print('Image sucessfully Downloaded: ',filename)
