@@ -66,6 +66,7 @@ def extract_features(imagefile, model):
 data = {}
 p = r"/Users/leo/netflix/fvector"
 
+# FAZER lógica para selecionar somente imagens do conjunto de treino
 for image in images:
     try:
         feat = extract_features(image,model)
@@ -76,6 +77,7 @@ for image in images:
 
 feat = np.array(list(data.values()))
 feat = feat.reshape(-1,4096)
+# Diminui a dimensão
 pca = PCA(n_components=10, random_state=1)
 pca.fit(feat)
 x = pca.transform(feat)
