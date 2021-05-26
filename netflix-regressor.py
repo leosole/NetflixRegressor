@@ -1,6 +1,7 @@
 #%%
 import numpy as np 
 import pandas as pd 
+import re
 from sklearn.model_selection import train_test_split
 from keras.preprocessing.image import load_img 
 from keras.preprocessing.image import img_to_array 
@@ -41,7 +42,7 @@ x_train, x_test, y_train, y_test = train_test_split(
     )
 
 # %%
-path = r"/Users/leo/netflix/img"
+path = r"/Users/leo/netflix/img" # mudar para caminho certo
 os.chdir(path)
 
 # Lista com imagens
@@ -64,20 +65,40 @@ def extract_features(imagefile, model):
     return features
    
 data = {}
-p = r"/Users/leo/netflix/fvector"
+data_test = {}
+p = r"/Users/leo/netflix/fvector" # mudar para caminho certo
 
-# FAZER lógica para selecionar somente imagens do conjunto de treino
+img_list_train = [x[-1] for x in x_train]
+img_list_test = [x[-1] for x in x_test]
+
+# Separar imagens de treino e teste
 for image in images:
-    try:
-        feat = extract_features(image,model)
-        data[image] = feat
-    except:
-        with open(p,'wb') as f:
-            pickle.dump(data,f)
+    if any(image in url for url in img_list_train):
+        try:
+            feat = extract_features(image,model)
+            data[image] = feat
+        except:
+            with open(p,'wb') as f:
+                pickle.dump(data,f)
+    if any(image in url for url in img_list_train):
+        try:
+            feat = extract_features(image,model)
+            data_test[image] = feat
+        except:
+            with open(p,'wb') as f:
+                pickle.dump(data,f)
 
 feat = np.array(list(data.values()))
 feat = feat.reshape(-1,4096)
-# Diminui a dimensão
+feat_test = np.array(list(data_test.values()))
+feat_test = feat_test.reshape(-1,4096)
+# Diminui a dimensão para n_components
 pca = PCA(n_components=10, random_state=1)
 pca.fit(feat)
-x = pca.transform(feat)
+img_train = pca.transform(feat)
+img_test = pca.transform(feat_test)
+# %%
+# Concatena parâmetros da tabela com parâmetros das imagens
+X_train = [np.append(row[:-1], img) for row, img in zip(x_train, img_train)]
+X_test = [np.append(row[:-1], img) for row, img in zip(x_test, img_test)]
+# %%
