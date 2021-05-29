@@ -16,6 +16,7 @@ from sklearn.decomposition import PCA
 
 import os
 import matplotlib.pyplot as plt
+import seaborn as sns
 import pickle
 
 #%%
@@ -179,11 +180,14 @@ history = model.fit(
 result = model.evaluate(X_test, y_test, verbose=0, return_dict=True)
 print(result)
 # %%
+# Gráfico do erro
 y_pred = model.predict(X_test)
-x_axis = np.arange(len(y_pred))
+samples = np.arange(len(y_pred))
 y_error = [abs(x - y) for x, y in zip(y_pred,y_test)]
+y_error =  [err for sub in y_error for err in sub]
 y_error.sort()
-plt.scatter(x_axis,y_error, label='Erro Absoluto')
-plt.legend()
+sns.displot(y_error)
+plt.xlabel('Erro absoluto')
+plt.show()
 
 # %%
