@@ -128,7 +128,7 @@ feat_test = np.array(list(data_test.values()))
 feat_test = feat_test.reshape(-1,4096)
 
 # Diminuir a dimensão para n_components
-pca = PCA(n_components=10, random_state=1)
+pca = PCA(n_components=5, random_state=1)
 pca.fit(feat)
 img_train = pca.transform(feat)
 img_test = pca.transform(feat_test)
@@ -174,5 +174,13 @@ history = model.fit(
   )
 
 result = model.evaluate(X_test, y_test, verbose=0, return_dict=True)
+print(result)
+# %%
+y_pred = model.predict(X_test)
+x_axis = np.arange(len(y_pred))
+y_error = [abs(x - y) for x, y in zip(y_pred,y_test)]
+y_error.sort()
+plt.scatter(x_axis,y_error, label='Erro Absoluto')
+plt.legend()
 
 # %%
