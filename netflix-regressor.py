@@ -34,9 +34,11 @@ df.drop (
 # Preencher nan com 0
 df['Awards Received'] = df['Awards Received'].fillna(0)
 df['Awards Nominated For'] = df['Awards Nominated For'].fillna(0)
-
-df = df.dropna()
-
+# %%
+# Cria uma oluna para cada gênero
+genre_col = df['Genre'].str.split(',\s*', expand=True).stack().unique()
+for col in genre_col:
+    df[col] = df['Genre'].str.contains(col)
 # %%
 # Listar imagens
 path = r"/Users/leo/netflix/img" # mudar para caminho certo
@@ -48,7 +50,6 @@ with os.scandir(path) as files:
         if f.name.endswith('.jpg'):
             images.append(f.name)
 
-
 #%%
 # Dividir conjuntos
 df = df[df['IMDb Score'].notna()]
@@ -56,6 +57,7 @@ y = df['IMDb Score'].to_numpy()
 x = df.drop(columns = ['IMDb Score'])
 # L: Teste só com colunas numéricas atuais
 x = df[['Awards Received', 'Awards Nominated For', 'Image']]
+df = df.dropna()
 x = x.iloc[:,:].to_numpy()
 x_train, x_test, y_train, y_test = train_test_split(
     x,
