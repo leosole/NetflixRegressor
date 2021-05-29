@@ -56,8 +56,9 @@ df = df[df['IMDb Score'].notna()]
 y = df['IMDb Score'].to_numpy()
 x = df.drop(columns = ['IMDb Score'])
 # L: Teste só com colunas numéricas atuais
-x = df[['Awards Received', 'Awards Nominated For', 'Image']]
+num_col = np.concatenate((genre_col,['Awards Received', 'Awards Nominated For', 'Image']))
 df = df.dropna()
+x = df[num_col]
 x = x.iloc[:,:].to_numpy()
 x_train, x_test, y_train, y_test = train_test_split(
     x,
@@ -172,7 +173,7 @@ history = model.fit(
   X_train, y_train,
   epochs=EPOCHS, 
   batch_size=BATCH_SIZE,
-  verbose=1,
+  verbose=0,
   )
 
 result = model.evaluate(X_test, y_test, verbose=0, return_dict=True)
