@@ -20,6 +20,9 @@ import seaborn as sns
 import pickle
 
 #%%
+# Número de colunas de parâmetros de imagem
+n_feat = 4
+#%%
 # Carregar dados
 path = r"/Users/leo/netflix" # mudar para caminho certo
 os.chdir(path)
@@ -36,29 +39,22 @@ df.drop (
 df['Awards Received'] = df['Awards Received'].fillna(0)
 df['Awards Nominated For'] = df['Awards Nominated For'].fillna(0)
 # %%
-# Cria uma oluna para cada gênero
+# Cria uma coluna para cada gênero
 genre_col = df['Genre'].str.split(',\s*', expand=True).stack().unique()
 for col in genre_col:
     df[col] = df['Genre'].str.contains(col)
-# %%
-# Listar imagens
-path = r"/Users/leo/netflix/img" # mudar para caminho certo
-os.chdir(path)
-
-images = []
-with os.scandir(path) as files:
-    for f in files:
-        if f.name.endswith('.jpg'):
-            images.append(f.name)
 
 #%%
 # Dividir conjuntos
 df = df[df['IMDb Score'].notna()]
 # L: Teste só com colunas numéricas atuais
-num_col = np.concatenate((genre_col,['Awards Received', 'Awards Nominated For', 'Image']))
+image_col = ['Image Feat '+str(x) for x in range(n_feat)]
+num_col = np.concatenate((np.concatenate((genre_col,image_col)),['Awards Received', 'Awards Nominated For']))
+all_col = np.concatenate((num_col,['IMDb Score']))
+df = df[all_col]
 df = df.dropna()
+df[genre_col] = df[genre_col].astype(int)
 y = df['IMDb Score'].to_numpy()
-x = df.drop(columns = ['IMDb Score'])
 x = df[num_col]
 x = x.iloc[:,:].to_numpy()
 x_train, x_test, y_train, y_test = train_test_split(
@@ -70,83 +66,12 @@ x_train, x_test, y_train, y_test = train_test_split(
     )
 
 
-#%%
-# Modelo para extração de features    
-model = VGG16()
-model = Model(inputs = model.inputs, outputs = model.layers[-2].output)
-
-def extract_features(imagefile, model):
-    img = load_img(imagefile, target_size=(224,224))
-    img = np.array(img) 
-    reshaped_img = img.reshape(1,224,224,3) 
-    imgx = preprocess_input(reshaped_img)
-    features = model.predict(imgx, use_multiprocessing=True)
-    return features
-   
-data = {}
-data_test = {}
-p = r"/Users/leo/netflix/fvector" # mudar para caminho certo
-
-img_list_train = [x[-1] for x in x_train]
-img_list_test = [x[-1] for x in x_test]
-
-#%%
-# Separar imagens de treino e teste
-# Lista para guardar erros
-bad_train_ind = []
-bad_test_ind = []
-
-for index, img in enumerate(img_list_train):
-    name = img.split("/")[-1].split('?')[0]
-    if name in images:
-        try:
-            feat = extract_features(name,model)
-            data[name] = feat
-        except:
-            bad_train_ind.append(index)
-            with open(p,'wb') as f:
-                pickle.dump(data,f)
-    else:
-        bad_train_ind.append(index)
-
-for index, img in enumerate(img_list_test):
-    name = img.split("/")[-1].split('?')[0]
-    if name in images:
-        try:
-            feat = extract_features(name,model)
-            data_test[name] = feat
-        except:
-            bad_test_ind.append(index)
-            with open(p,'wb') as f:
-                pickle.dump(data,f)
-    else:
-        bad_test_ind.append(index)
-#%%
-# Remover erros do conjunto de teste
-y_train = np.delete(y_train,bad_train_ind, 0)
-y_test = np.delete(y_test,bad_test_ind, 0)
-
-feat = np.array(list(data.values()))
-feat = feat.reshape(-1,4096)
-feat_test = np.array(list(data_test.values()))
-feat_test = feat_test.reshape(-1,4096)
-
-# Diminuir a dimensão para n_components
-pca = PCA(n_components=5, random_state=1)
-pca.fit(feat)
-img_train = pca.transform(feat)
-img_test = pca.transform(feat_test)
-
-# %%
-# Concatena parâmetros da tabela com parâmetros das imagens
-X_train = [np.append(row[:-1], img) for row, img in zip(x_train, img_train)]
-X_test = [np.append(row[:-1], img) for row, img in zip(x_test, img_test)]
 # %%
 # Define modelo
 # L: Modelo simples, só pra ver se tá rodando
 def build_model():
   model = keras.Sequential([
-    Dense(64, activation='relu', input_shape=[X_train.shape[-1],]),
+    Dense(64, activation='relu', input_shape=[x_train.shape[-1],]),
     Dense(64, activation='relu'),
     Dense(1)
   ])
@@ -161,8 +86,8 @@ def build_model():
 # Padroniza amostras
 from sklearn.preprocessing import RobustScaler
 scaler = RobustScaler()
-X_train = scaler.fit_transform(X_train)
-X_test = scaler.transform(X_test)
+x_train = scaler.fit_transform(x_train)
+x_test = scaler.transform(x_test)
 
 #%%
 # Treina modelo
@@ -171,17 +96,17 @@ BATCH_SIZE = 64
 model = build_model()
 
 history = model.fit(
-  X_train, y_train,
+  x_train, y_train,
   epochs=EPOCHS, 
   batch_size=BATCH_SIZE,
   verbose=0,
   )
 
-result = model.evaluate(X_test, y_test, verbose=0, return_dict=True)
+result = model.evaluate(x_test, y_test, verbose=0, return_dict=True)
 print(result)
 # %%
 # Gráfico do erro
-y_pred = model.predict(X_test)
+y_pred = model.predict(x_test)
 samples = np.arange(len(y_pred))
 y_error = [abs(x - y) for x, y in zip(y_pred,y_test)]
 y_error =  [err for sub in y_error for err in sub]
@@ -189,5 +114,4 @@ y_error.sort()
 sns.displot(y_error)
 plt.xlabel('Erro absoluto')
 plt.show()
-
 # %%
