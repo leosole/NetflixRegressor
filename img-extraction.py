@@ -21,7 +21,7 @@ import pickle
 
 #%%
 # Número de colunas de parâmetros de imagem
-n_feat = 4
+n_feat = 20
 #%%
 # Carregar dados
 path = r"/Users/leo/netflix" # mudar para caminho certo
