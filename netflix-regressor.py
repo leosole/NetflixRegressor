@@ -21,7 +21,7 @@ import pickle
 
 #%%
 # Número de colunas de parâmetros de imagem
-n_feat = 4
+n_feat = 20
 #%%
 # Carregar dados
 path = r"/Users/leo/netflix" # mudar para caminho certo
@@ -52,6 +52,7 @@ image_col = ['Image Feat '+str(x) for x in range(n_feat)]
 num_col = np.concatenate((np.concatenate((genre_col,image_col)),['Awards Received', 'Awards Nominated For']))
 all_col = np.concatenate((num_col,['IMDb Score']))
 df = df[all_col]
+df.corr()['IMDb Score'].sort_values(key=lambda x: abs(x))
 df = df.dropna()
 df[genre_col] = df[genre_col].astype(int)
 y = df['IMDb Score'].to_numpy()
@@ -71,8 +72,8 @@ x_train, x_test, y_train, y_test = train_test_split(
 # L: Modelo simples, só pra ver se tá rodando
 def build_model():
   model = keras.Sequential([
-    Dense(64, activation='relu', input_shape=[x_train.shape[-1],]),
-    Dense(64, activation='relu'),
+    Dense(128, activation='relu', input_shape=[x_train.shape[-1],]),
+    Dense(256, activation='relu'),
     Dense(1)
   ])
 
