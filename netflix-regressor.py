@@ -52,9 +52,9 @@ image_col = ['Image Feat '+str(x) for x in range(n_feat)]
 num_col = np.concatenate((np.concatenate((genre_col,image_col)),['Awards Received', 'Awards Nominated For']))
 all_col = np.concatenate((num_col,['IMDb Score']))
 df = df[all_col]
-df.corr()['IMDb Score'].sort_values(key=lambda x: abs(x))
 df = df.dropna()
 df[genre_col] = df[genre_col].astype(int)
+corr = df.corr()['IMDb Score'].sort_values(key=lambda x: abs(x))
 y = df['IMDb Score'].to_numpy()
 x = df[num_col]
 x = x.iloc[:,:].to_numpy()
@@ -72,8 +72,9 @@ x_train, x_test, y_train, y_test = train_test_split(
 # L: Modelo simples, só pra ver se tá rodando
 def build_model():
   model = keras.Sequential([
-    Dense(128, activation='relu', input_shape=[x_train.shape[-1],]),
-    Dense(256, activation='relu'),
+    Dense(32, activation='relu', input_shape=[x_train.shape[-1],]),
+    Dense(16, activation='relu'),
+    Dense(8, activation='relu'),
     Dense(1)
   ])
 
@@ -92,19 +93,32 @@ x_test = scaler.transform(x_test)
 
 #%%
 # Treina modelo
+from keras.callbacks import EarlyStopping
+early_stop = EarlyStopping(patience=64)
 EPOCHS = 300
-BATCH_SIZE = 64
+BATCH_SIZE = 16
 model = build_model()
 
 history = model.fit(
   x_train, y_train,
+  validation_split=0.1,
   epochs=EPOCHS, 
   batch_size=BATCH_SIZE,
   verbose=0,
+  callbacks=early_stop
   )
 
 result = model.evaluate(x_test, y_test, verbose=0, return_dict=True)
 print(result)
+# %%
+# Treinamento
+plt.plot(history.history['mae'])
+plt.plot(history.history['val_mae'])
+plt.title('Treinamento')
+plt.ylabel('Erro médio absoluto')
+plt.xlabel('Época')
+plt.legend(['treino', 'validação'], loc='upper right')
+plt.show()
 # %%
 # Gráfico do erro
 y_pred = model.predict(x_test)
@@ -114,5 +128,13 @@ y_error =  [err for sub in y_error for err in sub]
 y_error.sort()
 sns.displot(y_error)
 plt.xlabel('Erro absoluto')
+plt.ylabel('Contagem')
+plt.show()
+#%%
+# Vizualização das previsões
+plt.scatter(y_test,y_pred, alpha=.1, s=4)
+plt.plot([0,10],[0,10],c='r')
+plt.ylabel('Valor previsto')
+plt.xlabel('Valor real')
 plt.show()
 # %%
