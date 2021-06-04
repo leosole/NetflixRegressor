@@ -43,20 +43,30 @@ df['Awards Nominated For'] = df['Awards Nominated For'].fillna(0)
 genre_col = df['Genre'].str.split(',\s*', expand=True).stack().unique()
 for col in genre_col:
     df[col] = df['Genre'].str.contains(col)
-
+# %%
+# Cria uma coluna para cada língua
+lang_col = df['Languages'].str.split(',\s*', expand=True).stack().unique()
+for col in lang_col:
+    df[col] = df['Languages'].str.contains(col)
+# %%
+# Separa filmes de séries
+df['Series or Movie'] = df['Series or Movie'].str.contains('Movie').astype(int)
 #%%
 # Dividir conjuntos
 df = df[df['IMDb Score'].notna()]
 # L: Teste só com colunas numéricas atuais
 image_col = ['Image Feat '+str(x) for x in range(n_feat)]
-num_col = np.concatenate((np.concatenate((genre_col,image_col)),['Awards Received', 'Awards Nominated For']))
+# num_col = np.concatenate((np.concatenate((genre_col,image_col)),['Movie', 'Series','Awards Received', 'Awards Nominated For']))
+num_col = np.concatenate((lang_col, genre_col, image_col, ['Series or Movie','Awards Received', 'Awards Nominated For']))
 all_col = np.concatenate((num_col,['IMDb Score']))
 df = df[all_col]
 df = df.dropna()
 df[genre_col] = df[genre_col].astype(int)
-corr = df.corr()['IMDb Score'].sort_values(key=lambda x: abs(x))
+df[lang_col] = df[lang_col].astype(int)
+corr = df.corr()['IMDb Score'].sort_values(key=lambda x: abs(x)).dropna()
+top_col = num_col[-60:]
 y = df['IMDb Score'].to_numpy()
-x = df[num_col]
+x = df[top_col]
 x = x.iloc[:,:].to_numpy()
 x_train, x_test, y_train, y_test = train_test_split(
     x,
