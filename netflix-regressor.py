@@ -10,7 +10,7 @@ from keras.applications.vgg16 import preprocess_input
 
 from keras.applications.vgg16 import VGG16 
 from keras.models import Model
-from keras.layers import Dense
+from keras.layers import Dense, Dropout
 
 from sklearn.decomposition import PCA
 
@@ -75,25 +75,6 @@ x_train, x_test, y_train, y_test = train_test_split(
     shuffle= True,
     random_state=1
     )
-
-
-# %%
-# Define modelo
-# L: Modelo simples, só pra ver se tá rodando
-def build_model():
-  model = keras.Sequential([
-    Dense(32, activation='relu', input_shape=[x_train.shape[-1],]),
-    Dense(16, activation='relu'),
-    Dense(8, activation='relu'),
-    Dense(1)
-  ])
-
-  optimizer = keras.optimizers.RMSprop(0.001)
-
-  model.compile(loss='mse',
-                optimizer=optimizer,
-                metrics=['mae', 'mse'])
-  return model
 #%%
 # Padroniza amostras
 from sklearn.preprocessing import RobustScaler
@@ -101,11 +82,26 @@ scaler = RobustScaler()
 x_train = scaler.fit_transform(x_train)
 x_test = scaler.transform(x_test)
 
+# %%
+# Define modelo
+def build_model():
+  model = keras.Sequential([
+    Dense(16, activation='relu', input_shape=[x_train.shape[-1],]),
+    Dense(16, activation='relu'),
+    Dense(16, activation='relu'),
+    Dense(1)
+  ])
+  optimizer = keras.optimizers.RMSprop(0.0001)
+  model.compile(loss='mse',
+                optimizer=optimizer,
+                metrics=['mae', 'mse'])
+  return model
+
 #%%
 # Treina modelo
 from keras.callbacks import EarlyStopping
 early_stop = EarlyStopping(patience=64)
-EPOCHS = 300
+EPOCHS = 1000
 BATCH_SIZE = 16
 model = build_model()
 
@@ -119,9 +115,8 @@ history = model.fit(
   )
 
 result = model.evaluate(x_test, y_test, verbose=0, return_dict=True)
-print(result)
-# %%
-# Treinamento
+print(f'MAE: {result["mae"]}, MSE: {result["mse"]}')
+# Gráfico de treinamento
 plt.plot(history.history['mae'])
 plt.plot(history.history['val_mae'])
 plt.title('Treinamento')
