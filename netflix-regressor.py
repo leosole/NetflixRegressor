@@ -4,21 +4,15 @@ import numpy as np
 import pandas as pd 
 import keras
 from sklearn.model_selection import train_test_split
-from keras.preprocessing.image import load_img 
-from keras.preprocessing.image import img_to_array 
-from keras.applications.vgg16 import preprocess_input 
 
-from keras.applications.vgg16 import VGG16 
 from keras.models import Model
 from keras.layers import Dense, Dropout
-
-from sklearn.decomposition import PCA
 
 import os
 import matplotlib.pyplot as plt
 import seaborn as sns
-import pickle
 
+import visualkeras
 #%%
 # Número de colunas de parâmetros de imagem
 n_feat = 20
@@ -86,12 +80,15 @@ x_test = scaler.transform(x_test)
 # Define modelo
 def build_model():
   model = keras.Sequential([
-    Dense(16, activation='relu', input_shape=[x_train.shape[-1],]),
-    Dense(16, activation='relu'),
-    Dense(16, activation='relu'),
+    Dense(6, activation='relu', input_shape=[x_train.shape[-1],]),
+    Dense(6, activation='relu'),
+    Dense(6, activation='relu'),
+    Dense(6, activation='relu'),
+    Dense(6, activation='relu'),
+    Dense(6, activation='relu'),
     Dense(1)
   ])
-  optimizer = keras.optimizers.RMSprop(0.0001)
+  optimizer = keras.optimizers.RMSprop(0.001)
   model.compile(loss='mse',
                 optimizer=optimizer,
                 metrics=['mae', 'mse'])
@@ -150,5 +147,9 @@ plt.xlabel('Valor real')
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 plt.show()
+# %%
+# Visualização do modelo
+visualkeras.graph_view(model, to_file='modelo.png')
+
 
 # %%
