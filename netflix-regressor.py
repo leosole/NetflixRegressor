@@ -117,11 +117,15 @@ history = model.fit(
 result = model.evaluate(x_test, y_test, verbose=0, return_dict=True)
 print(f'MAE: {result["mae"]}, MSE: {result["mse"]}')
 # Gráfico de treinamento
-plt.plot(history.history['mae'])
-plt.plot(history.history['val_mae'])
+fig = plt.figure(figsize=(7,7))
+ax = fig.add_subplot(111)
+ax.plot(history.history['mae'])
+ax.plot(history.history['val_mae'])
 plt.title('Treinamento')
 plt.ylabel('Erro médio absoluto')
 plt.xlabel('Época')
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
 plt.legend(['treino', 'validação'], loc='upper right')
 plt.show()
 # %%
@@ -131,15 +135,20 @@ samples = np.arange(len(y_pred))
 y_error = [abs(x - y) for x, y in zip(y_pred,y_test)]
 y_error =  [err for sub in y_error for err in sub]
 y_error.sort()
-sns.displot(y_error)
+sns.displot(y_error, kde=True, height=6, aspect=1)
 plt.xlabel('Erro absoluto')
 plt.ylabel('Contagem')
 plt.show()
 #%%
 # Vizualização das previsões
-plt.scatter(y_test,y_pred, alpha=.1, s=4)
-plt.plot([0,10],[0,10],c='r')
+fig = plt.figure(figsize=(7,7))
+ax = fig.add_subplot(111)
+ax.scatter(y_test,y_pred, alpha=.1, s=4)
+ax.plot([0,10],[0,10],c='r')
 plt.ylabel('Valor previsto')
 plt.xlabel('Valor real')
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
 plt.show()
+
 # %%
